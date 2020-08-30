@@ -404,7 +404,7 @@ final class PartsDataTable implements DataTableTypeInterface
                 ->from(Part::class, 'parts')
                 ->innerJoin("parts.partLots", "lots")
                 ->groupBy('parts.id')
-                ->having('SUM(lots.amount)<parts.minamount');
+                ->having('SUM(lots.amount)<part.minamount');
             $builder->andWhere($builder->expr()->in('part', $in->getDQL()));
         }
         

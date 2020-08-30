@@ -97,12 +97,15 @@ class PartRepository extends NamedDBElementRepository
      */
     public function getPartCountWithLowStock(): int
     {
+        // Sub-query to get all part IDs that are low in stock.
         $in = $this->getEntityManager()->createQueryBuilder();
         $in->select("parts.id")
             ->from(Part::class, "parts")
             ->leftJoin("parts.partLots", "lots")
             ->groupBy("parts.id")
-            ->having("SUM(lots.amount)<parts.minamount");
+            ->having("SUM(lots.amount)<part.minamount");
+
+        // Just count the low-in-stock parts.
         $qb = $this->getEntityManager()->createQueryBuilder();
         $qb->select("COUNT(part.id)")
             ->from(Part::class, "part")
