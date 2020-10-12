@@ -47,6 +47,7 @@ use App\Entity\Base\AbstractNamedDBElement;
 use App\Entity\Base\AbstractStructuralDBElement;
 use App\Helpers\Trees\TreeViewNode;
 use App\Helpers\Trees\TreeViewNodeIterator;
+use App\Helpers\Trees\TreeViewNodeState;
 use App\Repository\StructuralDBElementRepository;
 use App\Services\EntityURLGenerator;
 use App\Services\UserCacheKeyGenerator;
@@ -78,18 +79,20 @@ class TreeViewGenerator
      *
      * @param string                           $class           The class for which the treeView should be generated
      * @param AbstractStructuralDBElement|null $parent          The root nodes in the tree should have this element as parent (use null, if you want to get all entities)
-     * @param string                           $href_type       The link type that will be generated for the hyperlink section of each node (see EntityURLGenerator for possible values).
+     * @param string                           $mode            The link type that will be generated for the hyperlink section of each node (see EntityURLGenerator for possible values).
      *                                                          Set to empty string, to disable href field.
      * @param AbstractDBElement|null           $selectedElement The element that should be selected. If set to null, no element will be selected.
      *
      * @return TreeViewNode[] an array of TreeViewNode[] elements of the root elements
      */
-    public function getTreeView(string $class, ?AbstractStructuralDBElement $parent = null, string $href_type = 'list_parts', ?AbstractDBElement $selectedElement = null): array
+    public function getTreeView(string $class, ?AbstractStructuralDBElement $parent = null, string $mode = 'list_parts', ?AbstractDBElement $selectedElement = null): array
     {
         $head = [];
 
+        $href_type = $mode;
+
         //When we use the newEdit type, add the New Element node.
-        if ('newEdit' === $href_type) {
+        if ('newEdit' === $mode) {
             //Generate the url for the new node
             $href = $this->urlGenerator->createURL(new $class());
             $new_node = new TreeViewNode($this->translator->trans('entity.tree.new'), $href);
@@ -103,6 +106,14 @@ class TreeViewGenerator
 
             //Every other treeNode will be used for edit
             $href_type = 'edit';
+        }
+
+        if ($mode === 'list_parts_root') {
+            $href_type = 'list_parts';
+        }
+
+        if ($mode === 'devices') {
+            $href_type = '';
         }
 
         $generic = $this->getGenericTree($class, $parent);
@@ -127,6 +138,12 @@ class TreeViewGenerator
             if (0 === strpos($item->getText(), '$$')) {
                 $item->setText($this->translator->trans(substr($item->getText(), 2)));
             }
+        }
+
+        if ($mode === 'list_parts_root' ||$mode === 'devices') {
+            $root_node = new TreeViewNode($this->translator->trans('tree.root_node.text'), null, $generic);
+            $root_node->setExpanded(true);
+            $generic = [$root_node];
         }
 
         return array_merge($head, $generic);
